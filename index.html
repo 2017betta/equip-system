@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>掃描測試系統</title>
+
+<script src="https://unpkg.com/@zxing/library@latest"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#e8f3ff;
+  text-align:center;
+}
+
+h1{
+  background:#0b3d91;
+  color:white;
+  padding:15px;
+  margin:0;
+}
+
+.container{
+  padding:20px;
+}
+
+button{
+  width:100%;
+  padding:15px;
+  margin:10px 0;
+  font-size:18px;
+  border:none;
+  border-radius:10px;
+  background:#0b3d91;
+  color:white;
+}
+
+video{
+  width:100%;
+  max-width:400px;
+  border:3px solid #0b3d91;
+  border-radius:10px;
+  margin-top:15px;
+}
+
+#result{
+  margin-top:20px;
+  font-size:20px;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<h1>📱 掃描系統（穩定版）</h1>
+
+<div class="container">
+
+<button onclick="startScan()">開始掃描</button>
+<button onclick="stopScan()">停止掃描</button>
+
+<video id="video" playsinline></video>
+
+<div id="result">尚未掃描</div>
+
+</div>
+
+<script>
+let codeReader;
+
+function startScan(){
+  codeReader = new ZXing.BrowserMultiFormatReader();
+
+  codeReader.decodeFromConstraints(
+    {
+      video:{
+        facingMode:{ ideal:"environment" }
+      }
+    },
+    "video",
+    (result, err)=>{
+      if(result){
+        document.getElementById("result").innerText =
+          "掃到條碼：" + result.text;
+
+        // 🔊 嗶聲
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        osc.connect(ctx.destination);
+        osc.start();
+        setTimeout(()=>osc.stop(),100);
+      }
+    }
+  );
+}
+
+function stopScan(){
+  if(codeReader){
+    codeReader.reset();
+  }
+}
+</script>
+
+</body>
+</html>
