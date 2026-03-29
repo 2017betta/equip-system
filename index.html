@@ -3,105 +3,967 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>掃描測試系統</title>
+<title>裝備平台 系統版</title>
 
 <script src="https://unpkg.com/@zxing/library@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
 
 <style>
+:root{
+  --blue:#0b3d91;
+  --bg:#e8f3ff;
+  --danger:#d93025;
+  --ok:#188038;
+}
+*{box-sizing:border-box}
 body{
   margin:0;
-  font-family:Arial;
-  background:#e8f3ff;
+  font-family:Arial,"Noto Sans TC",sans-serif;
+  background:var(--bg);
+  color:#1f2937;
+}
+.topbar{
+  background:var(--blue);
+  color:#fff;
+  padding:15px;
   text-align:center;
+  font-size:22px;
+  font-weight:bold;
 }
-
-h1{
-  background:#0b3d91;
-  color:white;
-  padding:15px;
-  margin:0;
-}
-
 .container{
-  padding:20px;
+  max-width:1200px;
+  margin:0 auto;
+  padding:12px;
+}
+.card{
+  background:#fff;
+  border-radius:14px;
+  padding:16px;
+  margin-top:14px;
+  box-shadow:0 4px 18px rgba(0,0,0,.08);
+}
+.hidden{display:none!important}
+
+.menu{
+  display:flex;
+  gap:10px;
+  overflow-x:auto;
+  padding-bottom:6px;
+}
+.menu button{
+  flex:0 0 auto;
 }
 
-button{
-  width:100%;
-  padding:15px;
-  margin:10px 0;
-  font-size:18px;
+.btn{
   border:none;
   border-radius:10px;
-  background:#0b3d91;
+  background:var(--blue);
+  color:#fff;
+  padding:12px 16px;
+  font-size:16px;
+  cursor:pointer;
+}
+.btn.gray{background:#6b7280}
+.btn.danger{background:var(--danger)}
+
+.pill-wrap{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.pill{
+  border:2px solid var(--blue);
+  background:#fff;
+  color:var(--blue);
+  border-radius:999px;
+  padding:10px 16px;
+  font-weight:bold;
+  cursor:pointer;
+}
+.pill.active{
+  background:var(--blue);
+  color:#fff;
+}
+
+input,select{
+  width:100%;
+  padding:12px;
+  font-size:16px;
+  border:1px solid #d0d7e2;
+  border-radius:10px;
+  margin-top:8px;
+  background:#fff;
+}
+
+label{
+  display:block;
+  margin-top:12px;
+  font-weight:bold;
+  text-align:left;
+}
+
+.table-wrap{
+  overflow:auto;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  border:1px solid #dbe3ee;
+  padding:10px 8px;
+  text-align:center;
+  font-size:14px;
+}
+th{
+  background:var(--blue);
   color:white;
 }
+
+.status{
+  margin-top:12px;
+  font-weight:bold;
+}
+.ok{color:var(--ok)}
+.err{color:var(--danger)}
 
 video{
   width:100%;
-  max-width:400px;
-  border:3px solid #0b3d91;
-  border-radius:10px;
-  margin-top:15px;
+  max-width:380px;
+  border:2px solid var(--blue);
+  border-radius:12px;
+  background:#000;
+  margin-top:12px;
 }
 
-#result{
-  margin-top:20px;
-  font-size:20px;
+#printSheet{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:center;
+}
+.label-box{
+  width:180px;
+  border:1px solid #ccc;
+  background:#fff;
+  padding:6px;
+  text-align:center;
+}
+.label-name{font-size:12px}
+.label-size{font-size:11px}
+.label-code{font-size:10px;word-break:break-all;margin-top:4px}
+
+.badge{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  background:#edf3ff;
+  color:var(--blue);
+  font-size:13px;
   font-weight:bold;
+}
+.low{
+  color:var(--danger);
+  font-weight:bold;
+}
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:12px;
+}
+.modal.show{display:flex}
+.modal-box{
+  width:100%;
+  max-width:420px;
+  background:#fff;
+  border-radius:18px;
+  padding:20px;
+}
+
+@media (max-width:768px){
+  .btn{
+    width:100%;
+    font-size:18px;
+    padding:14px;
+  }
+  .pill{
+    font-size:18px;
+    padding:12px 16px;
+  }
+  input,select{
+    font-size:18px;
+    padding:14px;
+  }
+  th,td{
+    font-size:13px;
+    padding:8px 6px;
+  }
+}
+@media print{
+  body *{visibility:hidden!important}
+  #printSection, #printSection *{visibility:visible!important}
+  #printSection{
+    display:block!important;
+    position:absolute;
+    left:0;
+    top:0;
+    width:100%;
+  }
+  #printBtns{display:none!important}
 }
 </style>
 </head>
-
 <body>
 
-<h1>📱 掃描系統（穩定版）</h1>
+<div class="topbar">裝備平台 系統版</div>
 
 <div class="container">
+  <div class="card">
+    <div style="text-align:center;font-size:18px;font-weight:bold" id="welcomeText">請先登入</div>
+    <div style="margin-top:12px;text-align:center">
+      <button class="btn" id="loginBtn">登入</button>
+      <button class="btn danger hidden" id="logoutBtn">登出</button>
+    </div>
+    <div style="text-align:center;margin-top:10px">
+      <span class="badge" id="userBadge">未登入</span>
+      <span class="badge" id="roleBadge">訪客</span>
+    </div>
+  </div>
 
-<button onclick="startScan()">開始掃描</button>
-<button onclick="stopScan()">停止掃描</button>
+  <div id="systemWrap" class="hidden">
+    <div class="card">
+      <div class="menu">
+        <button class="btn" onclick="showSection('stockInSection')">📥 進貨</button>
+        <button class="btn" onclick="showSection('stockOutSection')">📤 出貨</button>
+        <button class="btn" onclick="showSection('inventorySection'); renderInventory()">📦 庫存</button>
+        <button class="btn" onclick="showSection('reprintSection'); loadReprintOptions()">♻️ 補印</button>
+        <button class="btn" onclick="showSection('masterSection'); renderMaster()">🗂️ 商品主檔</button>
+        <button class="btn" onclick="showSection('lowSection'); renderLowStock()">⚠️ 低庫存</button>
+      </div>
+    </div>
 
-<video id="video" playsinline></video>
+    <div id="stockInSection" class="card hidden">
+      <h3>批量進貨</h3>
+      <div id="stockInNotice" class="err"></div>
 
-<div id="result">尚未掃描</div>
+      <div>選商品</div>
+      <div id="productWrap" class="pill-wrap"></div>
 
+      <div style="margin-top:12px">選尺寸</div>
+      <div id="sizeWrap" class="pill-wrap"></div>
+
+      <label for="qtyInput">數量</label>
+      <input id="qtyInput" type="number" min="1" value="1">
+
+      <div style="margin-top:12px">
+        <button class="btn" onclick="confirmStockIn()">確認進貨</button>
+      </div>
+
+      <div id="stockInStatus" class="status"></div>
+    </div>
+
+    <div id="stockOutSection" class="card hidden">
+      <h3>出貨</h3>
+
+      <label for="outCode">手動輸入條碼</label>
+      <input id="outCode" placeholder="例如：TS-YS0001">
+
+      <div style="margin-top:12px">
+        <button class="btn" onclick="stockOut()">確認出貨</button>
+        <button class="btn" onclick="startScan(false)">開始掃描</button>
+        <button class="btn" onclick="startScan(true)">連續掃描</button>
+        <button class="btn gray" onclick="stopScan()">停止掃描</button>
+      </div>
+
+      <video id="video" playsinline muted></video>
+      <div id="scanPreview" style="margin-top:12px;font-weight:bold;color:#0b3d91">等待掃描中...</div>
+      <div id="stockOutStatus" class="status"></div>
+    </div>
+
+    <div id="inventorySection" class="card hidden">
+      <h3>庫存總表</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>條碼</th>
+              <th>商品</th>
+              <th>尺寸</th>
+              <th>建立時間</th>
+            </tr>
+          </thead>
+          <tbody id="inventoryBody"></tbody>
+        </table>
+      </div>
+      <div id="inventoryStatus" class="status"></div>
+    </div>
+
+    <div id="reprintSection" class="card hidden">
+      <h3>補印貼紙</h3>
+      <label>商品名稱</label>
+      <select id="reprintProduct"></select>
+
+      <label>尺寸</label>
+      <select id="reprintSize"></select>
+
+      <div style="margin-top:12px">
+        <button class="btn" onclick="searchReprint()">查詢</button>
+      </div>
+
+      <div id="reprintResult" style="margin-top:12px"></div>
+    </div>
+
+    <div id="masterSection" class="card hidden">
+      <h3>商品主檔</h3>
+      <div id="masterNotice" class="err"></div>
+      <div id="masterTable" class="table-wrap"></div>
+
+      <div style="margin-top:20px">
+        <h4>新增商品</h4>
+        <label>商品名稱</label>
+        <input id="newProductName" placeholder="例如：運動褲">
+
+        <label>商品代碼</label>
+        <input id="newProductCode" placeholder="例如：PT">
+
+        <label>尺寸（逗號分隔）</label>
+        <input id="newProductSizes" placeholder="例如：XS,S,M,L">
+
+        <div style="margin-top:12px">
+          <button class="btn" onclick="addProduct()">新增商品</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="lowSection" class="card hidden">
+      <h3>低庫存清單</h3>
+      <div id="lowStockArea"></div>
+    </div>
+
+    <div class="card">
+      <h3>最新出貨紀錄</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>時間</th>
+              <th>教練</th>
+              <th>商品</th>
+              <th>尺寸</th>
+              <th>條碼</th>
+            </tr>
+          </thead>
+          <tbody id="logBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="printSection" class="card hidden">
+    <h3>條碼預覽</h3>
+    <div id="printSheet"></div>
+    <div id="printBtns" style="margin-top:16px">
+      <button class="btn" onclick="window.print()">列印</button>
+      <button class="btn gray" onclick="closePrint()">返回</button>
+    </div>
+  </div>
+</div>
+
+<div id="loginModal" class="modal">
+  <div class="modal-box">
+    <h3 style="margin-top:0">登入</h3>
+    <label>選擇教練</label>
+    <select id="coachSelect"></select>
+
+    <label>帳號</label>
+    <input id="loginAccount" placeholder="帳號">
+
+    <label>密碼</label>
+    <input id="loginPassword" type="password" placeholder="密碼">
+
+    <div style="margin-top:12px">
+      <button class="btn" onclick="doLogin()">登入</button>
+      <button class="btn gray" onclick="closeLogin()">取消</button>
+    </div>
+    <div id="loginStatus" class="status err"></div>
+  </div>
 </div>
 
 <script>
-let codeReader;
+const users = {
+  "佳祐": { account:"jerry", password:"0606", role:"admin" },
+  "土豆教練": { account:"msmdick", password:"1111", role:"coach" },
+  "小宇教練": { account:"h072012", password:"2222", role:"coach" },
+  "阿澤教練": { account:"zemo", password:"3333", role:"coach" },
+  "小馬教練": { account:"ma", password:"5555", role:"coach" },
+  "莉筑教練": { account:"chuu", password:"6666", role:"coach" }
+};
 
-function startScan(){
+const defaultProducts = {
+  "緊身衣": { code:"TS", sizes:["Ys","Ym","5Xs","4Xs","3Xs","2Xs","Xs","S","M","L","Xl"] },
+  "短T": { code:"ST", sizes:["8","10","12","14","Xs","S","M","L","Xl","2L","3L","4L","5L","6L"] },
+  "外套": { code:"JK", sizes:["Xs","S","L"] },
+  "帽T": { code:"HD", sizes:["8","10","12","14","Xs","S","M","L","Xl","2Xl","3L"] },
+  "競速帽": { code:"RC", sizes:["M","L"] },
+  "後背包": { code:"BP", sizes:["100"] },
+  "護具": { code:"PD", sizes:["Xs","S","M","L","Xl"] },
+  "梅花帽": { code:"MH", sizes:["Xs","S","M","L"] },
+  "拉桿包": { code:"TB", sizes:["單一"] },
+  "休閒鞋": { code:"SH", sizes:["13J","10J","2","4","6","8"] }
+};
+
+const code39Map = {
+  "0":"nnnwwnwnn","1":"wnnwnnnnw","2":"nnwwnnnnw","3":"wnwwnnnnn","4":"nnnwwnnnw","5":"wnnwwnnnn","6":"nnwwwnnnn","7":"nnnwnnwnw","8":"wnnwnnwnn","9":"nnwwnnwnn",
+  "A":"wnnnnwnnw","B":"nnwnnwnnw","C":"wnwnnwnnn","D":"nnnnwwnnw","E":"wnnnwwnnn","F":"nnwnwwnnn","G":"nnnnnwwnw","H":"wnnnnwwnn","I":"nnwnnwwnn","J":"nnnnwwwnn",
+  "K":"wnnnnnnww","L":"nnwnnnnww","M":"wnwnnnnwn","N":"nnnnwnnww","O":"wnnnwnnwn","P":"nnwnwnnwn","Q":"nnnnnnwww","R":"wnnnnnwwn","S":"nnwnnnwwn","T":"nnnnwnwwn",
+  "U":"wwnnnnnnw","V":"nwwnnnnnw","W":"wwwnnnnnn","X":"nwnnwnnnw","Y":"wwnnwnnnn","Z":"nwwnwnnnn","-":"nwnnnnwnw",".":"wwnnnnwnn"," ":"nwwnnnwnn","$":"nwnwnwnnn",
+  "/":"nwnwnnnwn","+":"nwnnnwnwn","%":"nnnwnwnwn","*":"nwnnwnwnn"
+};
+
+let currentUserName = "";
+let currentUserRole = "";
+let selectedProduct = "";
+let selectedSize = "";
+let codeReader = null;
+let scanRunning = false;
+let continuousMode = false;
+let lastScannedCode = "";
+let lastScanTime = 0;
+
+function getMaster(){
+  const raw = localStorage.getItem("equip_master");
+  if(raw) return JSON.parse(raw);
+  localStorage.setItem("equip_master", JSON.stringify(defaultProducts));
+  return JSON.parse(JSON.stringify(defaultProducts));
+}
+function saveMaster(data){ localStorage.setItem("equip_master", JSON.stringify(data)); }
+
+function getStock(){ return JSON.parse(localStorage.getItem("equip_stock") || "[]"); }
+function saveStock(data){ localStorage.setItem("equip_stock", JSON.stringify(data)); }
+
+function getLogs(){ return JSON.parse(localStorage.getItem("equip_logs") || "[]"); }
+function saveLogs(data){ localStorage.setItem("equip_logs", JSON.stringify(data)); }
+
+function nowStr(){
+  const d = new Date();
+  return ${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")};
+}
+
+function beep(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = 880;
+    gain.gain.value = 0.08;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    setTimeout(()=>{ osc.stop(); ctx.close(); }, 120);
+  }catch(e){}
+}
+function vibrateSuccess(){
+  try{ if(navigator.vibrate) navigator.vibrate(120); }catch(e){}
+}
+
+function openLogin(){
+  const select = document.getElementById("coachSelect");
+  select.innerHTML = "";
+  Object.keys(users).forEach(name=>{
+    const op = document.createElement("option");
+    op.value = name;
+    op.textContent = name;
+    select.appendChild(op);
+  });
+  document.getElementById("loginAccount").value = "";
+  document.getElementById("loginPassword").value = "";
+  document.getElementById("loginStatus").textContent = "";
+  document.getElementById("loginModal").classList.add("show");
+}
+function closeLogin(){
+  document.getElementById("loginModal").classList.remove("show");
+}
+function doLogin(){
+  const name = document.getElementById("coachSelect").value;
+  const account = document.getElementById("loginAccount").value.trim();
+  const password = document.getElementById("loginPassword").value.trim();
+  const info = users[name];
+
+  if(account === info.account && password === info.password){
+    currentUserName = name;
+    currentUserRole = info.role;
+    closeLogin();
+    updateHeader();
+    renderProducts();
+    renderInventory();
+    renderLogs();
+    renderMaster();
+  }else{
+    document.getElementById("loginStatus").textContent = "帳號或密碼錯誤";
+  }
+}
+function logout(){
+  currentUserName = "";
+  currentUserRole = "";
+  selectedProduct = "";
+  selectedSize = "";
+  stopScan();
+  hideAllSections();
+  updateHeader();
+}
+
+function updateHeader(){
+  document.getElementById("welcomeText").textContent = currentUserName ? 已登入：${currentUserName} : "請先登入";
+  document.getElementById("userBadge").textContent = currentUserName || "未登入";
+  document.getElementById("roleBadge").textContent = currentUserRole || "訪客";
+  document.getElementById("systemWrap").classList.toggle("hidden", !currentUserName);
+  document.getElementById("loginBtn").classList.toggle("hidden", !!currentUserName);
+  document.getElementById("logoutBtn").classList.toggle("hidden", !currentUserName);
+  document.getElementById("stockInNotice").textContent = currentUserRole === "admin" ? "" : "只有佳祐可以進貨";
+  document.getElementById("masterNotice").textContent = currentUserRole === "admin" ? "" : "只有佳祐可以新增商品";
+}
+
+function hideAllSections(){
+  ["stockInSection","stockOutSection","inventorySection","reprintSection","masterSection","lowSection"].forEach(id=>{
+    document.getElementById(id).classList.add("hidden");
+  });
+}
+function showSection(id){
+  hideAllSections();
+  document.getElementById("printSection").classList.add("hidden");
+  document.getElementById(id).classList.remove("hidden");
+  if(id === "stockInSection") renderProducts();
+}
+
+function renderProducts(){
+  const master = getMaster();
+  const wrap = document.getElementById("productWrap");
+  const sizeWrap = document.getElementById("sizeWrap");
+  wrap.innerHTML = "";
+  sizeWrap.innerHTML = "";
+  selectedProduct = "";
+  selectedSize = "";
+  document.getElementById("stockInStatus").textContent = "";
+
+  Object.keys(master).forEach(name=>{
+    const btn = document.createElement("button");
+    btn.className = "pill";
+    btn.textContent = name;
+    btn.onclick = ()=>{
+      document.querySelectorAll("#productWrap .pill").forEach(x=>x.classList.remove("active"));
+      btn.classList.add("active");
+      selectedProduct = name;
+      selectedSize = "";
+      renderSizes(name);
+      document.getElementById("stockInStatus").innerHTML = 已選商品：${name};
+    };
+    wrap.appendChild(btn);
+  });
+}
+function renderSizes(name){
+  const master = getMaster();
+  const wrap = document.getElementById("sizeWrap");
+  wrap.innerHTML = "";
+  (master[name]?.sizes || []).forEach(size=>{
+    const btn = document.createElement("button");
+    btn.className = "pill";
+    btn.textContent = size;
+    btn.onclick = ()=>{
+      document.querySelectorAll("#sizeWrap .pill").forEach(x=>x.classList.remove("active"));
+      btn.classList.add("active");
+      selectedSize = size;
+      document.getElementById("stockInStatus").innerHTML = 已選：${selectedProduct} / ${selectedSize};
+    };
+    wrap.appendChild(btn);
+  });
+}
+
+function getNextCodeBase(prefix, sizeText){
+  const all = [...getStock(), ...getLogs()];
+  const prefixStr = ${prefix}-${sizeText};
+  let maxNum = 0;
+  all.forEach(item=>{
+    const code = item.code || "";
+    if(code.startsWith(prefixStr)){
+      const num = parseInt(code.slice(-4), 10);
+      if(!isNaN(num) && num > maxNum) maxNum = num;
+    }
+  });
+  return maxNum;
+}
+
+function confirmStockIn(){
+  if(currentUserRole !== "admin"){
+    alert("只有佳祐可以進貨");
+    return;
+  }
+  if(!selectedProduct || !selectedSize){
+    alert("請先選商品與尺寸");
+    return;
+  }
+
+  const qty = Math.max(1, parseInt(document.getElementById("qtyInput").value || "1", 10));
+  const master = getMaster();
+  const prefix = master[selectedProduct].code;
+  const sizeText = String(selectedSize).toUpperCase();
+  const stock = getStock();
+  const base = getNextCodeBase(prefix, sizeText);
+  const labels = [];
+
+  for(let i=0;i<qty;i++){
+    const serial = String(base + i + 1).padStart(4, "0");
+    const code = ${prefix}-${sizeText}${serial};
+    stock.push({
+      code,
+      name:selectedProduct,
+      cat:prefix,
+      size:selectedSize,
+      createdAt:nowStr()
+    });
+    labels.push({
+      name:selectedProduct,
+      size:selectedSize,
+      code
+    });
+  }
+
+  saveStock(stock);
+  document.getElementById("stockInStatus").innerHTML = ✅ 進貨成功：${selectedProduct} ${sizeText}｜共 ${qty} 件;
+  renderInventory();
+  renderMaster();
+  showPrint(labels);
+}
+
+function buildCode39Svg(code){
+  const text = "" + code.toUpperCase() + "";
+  const narrow = 2.4;
+  const wide = 6;
+  const height = 26;
+  const gap = 1.6;
+  let x = 0;
+  let rects = "";
+
+  for(let c=0;c<text.length;c++){
+    const ch = text[c];
+    const pattern = code39Map[ch];
+    if(!pattern){
+      return <div style="font-size:10px;color:red">不支援字元：${ch}</div>;
+    }
+    for(let i=0;i<pattern.length;i++){
+      const isBar = i % 2 === 0;
+      const w = pattern[i] === "w" ? wide : narrow;
+      if(isBar){
+        rects += <rect x="${x}" y="0" width="${w}" height="${height}" fill="black"></rect>;
+      }
+      x += w;
+    }
+    if(c < text.length - 1) x += gap;
+  }
+
+  return <svg xmlns="http://www.w3.org/2000/svg" width="${x}" height="${height}" viewBox="0 0 ${x} ${height}" preserveAspectRatio="none" style="width:100%;height:${height}px">${rects}</svg>;
+}
+
+function showPrint(labels){
+  hideAllSections();
+  document.getElementById("printSection").classList.remove("hidden");
+  const sheet = document.getElementById("printSheet");
+  sheet.innerHTML = "";
+
+  labels.forEach(item=>{
+    const qrId = "qr_" + Math.random().toString(36).slice(2,7);
+    const div = document.createElement("div");
+    div.className = "label-box";
+    div.innerHTML = `
+      <div class="label-name">${item.name}</div>
+      <div class="label-size">${String(item.size).toUpperCase()}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:4px;">
+        <canvas id="${qrId}" width="60" height="60"></canvas>
+        <div style="width:110px">${buildCode39Svg(item.code)}</div>
+      </div>
+      <div class="label-code">${item.code}</div>
+    `;
+    sheet.appendChild(div);
+
+    QRCode.toCanvas(document.getElementById(qrId), item.code, {
+      width: 60,
+      margin: 1
+    });
+  });
+}
+function closePrint(){
+  document.getElementById("printSection").classList.add("hidden");
+  document.getElementById("stockInSection").classList.remove("hidden");
+}
+
+function stockOutByCode(code){
+  if(!code){
+    document.getElementById("stockOutStatus").className = "status err";
+    document.getElementById("stockOutStatus").textContent = "請輸入條碼";
+    return;
+  }
+
+  const stock = getStock();
+  const idx = stock.findIndex(x=>x.code === code);
+
+  if(idx === -1){
+    document.getElementById("stockOutStatus").className = "status err";
+    document.getElementById("stockOutStatus").textContent = ❌ 查無此條碼：${code};
+    document.getElementById("scanPreview").textContent = 掃到條碼：${code}，但查不到商品;
+    return;
+  }
+
+  const item = stock[idx];
+  document.getElementById("scanPreview").textContent = 掃到商品：${item.name} / 尺寸：${item.size} / 條碼：${item.code};
+  document.getElementById("stockOutStatus").className = "status ok";
+  document.getElementById("stockOutStatus").innerHTML = 已掃到：${item.name} / ${item.size} / ${item.code}<br>正在出貨...;
+
+  stock.splice(idx, 1);
+  saveStock(stock);
+
+  const remaining = stock.filter(x=>x.name === item.name && x.size === item.size).length;
+  const logs = getLogs();
+  logs.push({
+    time: nowStr(),
+    user: currentUserName,
+    name: item.name,
+    size: item.size,
+    code: item.code,
+    type: "出貨"
+  });
+  saveLogs(logs);
+
+  document.getElementById("stockOutStatus").innerHTML = ✅ 出貨成功：${item.name} / ${item.size} / ${item.code}<br>剩餘庫存：${remaining} 件;
+  document.getElementById("outCode").value = "";
+  renderInventory();
+  renderLogs();
+  renderMaster();
+}
+function stockOut(){
+  stockOutByCode(document.getElementById("outCode").value.trim());
+}
+
+function startScan(isContinuous){
+  if(scanRunning) return;
+
+  continuousMode = !!isContinuous;
+  scanRunning = true;
+  document.getElementById("stockOutStatus").className = "status";
+  document.getElementById("stockOutStatus").textContent = continuousMode ? "連續掃描中..." : "請將鏡頭對準條碼";
+  document.getElementById("scanPreview").textContent = "等待掃描中...";
+
   codeReader = new ZXing.BrowserMultiFormatReader();
-
   codeReader.decodeFromConstraints(
     {
       video:{
-        facingMode:{ ideal:"environment" }
+        facingMode:{ ideal:"environment" },
+        width:{ ideal:1280 },
+        height:{ ideal:720 }
       }
     },
     "video",
     (result, err)=>{
-      if(result){
-        document.getElementById("result").innerText =
-          "掃到條碼：" + result.text;
+      if(!scanRunning || !result) return;
 
-        // 🔊 嗶聲
-        const ctx = new AudioContext();
-        const osc = ctx.createOscillator();
-        osc.connect(ctx.destination);
-        osc.start();
-        setTimeout(()=>osc.stop(),100);
-      }
+      const code = result.text;
+      const now = Date.now();
+
+      if(code === lastScannedCode && now - lastScanTime < 1800) return;
+
+      lastScannedCode = code;
+      lastScanTime = now;
+
+      document.getElementById("outCode").value = code;
+
+      const stock = getStock();
+      const item = stock.find(x=>x.code === code);
+      document.getElementById("scanPreview").textContent = item ? 掃到：${item.name} / ${item.size} : ⚠️ 查無商品：${code};
+
+      beep();
+      vibrateSuccess();
+
+      if(!continuousMode) stopScan();
+
+      setTimeout(()=>stockOutByCode(code), 1000);
     }
   );
 }
-
 function stopScan(){
   if(codeReader){
     codeReader.reset();
+    codeReader = null;
   }
+  scanRunning = false;
+  continuousMode = false;
 }
+
+function renderInventory(){
+  const stock = getStock();
+  const body = document.getElementById("inventoryBody");
+  body.innerHTML = "";
+  if(stock.length === 0){
+    body.innerHTML = <tr><td colspan="4">目前沒有庫存資料</td></tr>;
+    document.getElementById("inventoryStatus").textContent = "";
+    return;
+  }
+
+  stock.forEach(item=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = <td>${item.code}</td><td>${item.name}</td><td>${item.size}</td><td>${item.createdAt || ""}</td>;
+    body.appendChild(tr);
+  });
+  document.getElementById("inventoryStatus").textContent = 目前總件數：${stock.length};
+}
+
+function loadReprintOptions(){
+  const master = getMaster();
+  const p = document.getElementById("reprintProduct");
+  p.innerHTML = "";
+  Object.keys(master).forEach(name=>{
+    const op = document.createElement("option");
+    op.value = name;
+    op.textContent = name;
+    p.appendChild(op);
+  });
+  updateReprintSizes();
+}
+function updateReprintSizes(){
+  const master = getMaster();
+  const p = document.getElementById("reprintProduct").value;
+  const s = document.getElementById("reprintSize");
+  s.innerHTML = "";
+  (master[p]?.sizes || []).forEach(size=>{
+    const op = document.createElement("option");
+    op.value = size;
+    op.textContent = size;
+    s.appendChild(op);
+  });
+}
+function searchReprint(){
+  const product = document.getElementById("reprintProduct").value;
+  const size = document.getElementById("reprintSize").value;
+  const stock = getStock().filter(x=>x.name === product && x.size === size);
+  const result = document.getElementById("reprintResult");
+  result.innerHTML = "";
+
+  if(stock.length === 0){
+    result.textContent = "找不到符合的條碼";
+    return;
+  }
+
+  const bulkBtn = document.createElement("button");
+  bulkBtn.className = "btn";
+  bulkBtn.textContent = "🖨️ 一次列印全部";
+  bulkBtn.onclick = ()=>showPrint(stock.map(x=>({name:x.name,size:x.size,code:x.code})));
+  result.appendChild(bulkBtn);
+
+  stock.forEach(item=>{
+    const row = document.createElement("div");
+    row.style.cssText = "margin:8px 0;padding:10px;border:1px solid #ddd;border-radius:8px;display:flex;justify-content:space-between;align-items:center;gap:10px";
+    const txt = document.createElement("div");
+    txt.textContent = item.code;
+    const btn = document.createElement("button");
+    btn.className = "btn";
+    btn.textContent = "單張列印";
+    btn.onclick = ()=>showPrint([{name:item.name,size:item.size,code:item.code}]);
+    row.appendChild(txt);
+    row.appendChild(btn);
+    result.appendChild(row);
+  });
+}
+
+function aggregateStock(){
+  const stock = getStock();
+  const count = {};
+  stock.forEach(item=>{
+    const key = ${item.name}-${item.size};
+    count[key] = (count[key] || 0) + 1;
+  });
+  return count;
+}
+function renderLowStock(){
+  const count = aggregateStock();
+  const lines = Object.keys(count).filter(k=>count[k] < 3);
+  const area = document.getElementById("lowStockArea");
+  if(lines.length === 0){
+    area.innerHTML = "目前沒有低庫存項目";
+    return;
+  }
+  area.innerHTML = lines.map(k=>`<div class="low">⚠️ ${k} 剩 ${count[k]} 件</div>`).join("");
+}
+
+function renderMaster(){
+  const master = getMaster();
+  const stockCount = aggregateStock();
+  let html = <table><thead><tr><th>商品名稱</th><th>商品代碼</th><th>尺寸</th><th>庫存數量</th></tr></thead><tbody>;
+  Object.keys(master).forEach(name=>{
+    const sizes = master[name].sizes;
+    const qtyText = sizes.map(size=>{
+      const q = stockCount[`${name}-${size}`] || 0;
+      return q < 3 ? <span class="low">${size}:${q}</span> : ${size}:${q};
+    }).join(" / ");
+    html += <tr><td>${name}</td><td>${master[name].code}</td><td>${sizes.join(" / ")}</td><td>${qtyText}</td></tr>;
+  });
+  html += </tbody></table>;
+  document.getElementById("masterTable").innerHTML = html;
+}
+function addProduct(){
+  if(currentUserRole !== "admin"){
+    alert("只有佳祐可以新增商品");
+    return;
+  }
+
+  const name = document.getElementById("newProductName").value.trim();
+  const code = document.getElementById("newProductCode").value.trim().toUpperCase();
+  const sizes = document.getElementById("newProductSizes").value.split(",").map(s=>s.trim()).filter(Boolean);
+
+  if(!name || !code || sizes.length === 0){
+    alert("請填完整");
+    return;
+  }
+
+  const master = getMaster();
+  master[name] = { code, sizes };
+  saveMaster(master);
+
+  document.getElementById("newProductName").value = "";
+  document.getElementById("newProductCode").value = "";
+  document.getElementById("newProductSizes").value = "";
+
+  renderMaster();
+  renderProducts();
+  loadReprintOptions();
+}
+
+function renderLogs(){
+  const logs = getLogs().slice().reverse().slice(0,20);
+  const body = document.getElementById("logBody");
+  body.innerHTML = "";
+  if(logs.length === 0){
+    body.innerHTML = <tr><td colspan="5">目前沒有出貨紀錄</td></tr>;
+    return;
+  }
+  logs.forEach(item=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = <td>${item.time || ""}</td><td>${item.user || ""}</td><td>${item.name || ""}</td><td>${item.size || ""}</td><td>${item.code || ""}</td>;
+    body.appendChild(tr);
+  });
+}
+
+document.getElementById("loginBtn").addEventListener("click", openLogin);
+document.getElementById("logoutBtn").addEventListener("click", logout);
+document.getElementById("reprintProduct").addEventListener("change", updateReprintSizes);
+
+updateHeader();
+renderMaster();
+renderInventory();
+renderLogs();
+loadReprintOptions();
 </script>
 
 </body>
