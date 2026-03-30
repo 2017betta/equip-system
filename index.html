@@ -1,0 +1,329 @@
+[index_fixed.html](https://github.com/user-attachments/files/26353818/index_fixed.html)
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>裝備平台</title>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#d9f1ff;text-align:center;color:#111}
+.topbar{background:#0b3d91;color:#fff;padding:16px;font-size:28px;font-weight:bold}
+.panel{background:#fff;width:min(92vw,950px);margin:24px auto;padding:24px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,.08)}
+button{padding:12px 18px;margin:6px;font-size:18px;border-radius:10px;border:none;cursor:pointer}
+.primary{background:#0b3d91;color:#fff}
+.secondary{background:#fff;border:2px solid #0b3d91;color:#0b3d91}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:999}
+.box{background:#fff;padding:20px;margin:15% auto;width:min(90vw,320px);border-radius:12px}
+.section{display:none;margin-top:20px}
+.label{border:1px solid #000;margin:10px;padding:10px;border-radius:10px;background:#fff}
+input{padding:10px;font-size:16px;border-radius:8px;border:1px solid #bbb}
+table{width:100%;border-collapse:collapse;margin-top:20px;background:#fff}
+td,th{border:1px solid #ccc;padding:8px}
+.flex{display:flex;flex-wrap:wrap;gap:20px;justify-content:center}
+.col{flex:1;min-width:300px}
+.notice{color:#666;font-size:14px}
+</style>
+</head>
+<body>
+
+<div class="topbar">裝備平台</div>
+
+<div id="loginArea" class="panel">
+  <h2>登入</h2>
+  <button class="secondary" onclick="selectCoach('jerry')">佳祐</button>
+  <button class="secondary" onclick="selectCoach('msmdick')">土豆</button>
+  <button class="secondary" onclick="selectCoach('h072012')">小宇</button>
+  <button class="secondary" onclick="selectCoach('zemo')">阿澤</button>
+  <button class="secondary" onclick="selectCoach('ma')">小馬</button>
+  <button class="secondary" onclick="selectCoach('chuu')">莉筑</button>
+</div>
+
+<div id="modal" class="modal">
+  <div class="box">
+    <h3 id="title"></h3>
+    <input id="pw" type="password" placeholder="密碼"><br><br>
+    <button class="primary" onclick="loginUser()">登入</button>
+    <button class="secondary" onclick="closeModal()">取消</button>
+  </div>
+</div>
+
+<div id="main" class="panel" style="display:none">
+  <h2 id="welcome"></h2>
+
+  <div>
+    <button class="primary" onclick="openSection('inSection')">📦進貨</button>
+    <button class="primary" onclick="openSection('outSection')">📤出貨</button>
+    <button class="primary" onclick="openSection('stockSection')">📋庫存</button>
+    <button class="primary" onclick="logout()">🚪登出</button>
+  </div>
+
+  <div id="inSection" class="section">
+    <h3>進貨</h3>
+    <p class="notice">只有佳祐可以進貨</p>
+
+    <div>
+      <button class="secondary" onclick="selectProduct('MH','梅花帽')">梅花帽</button>
+      <button class="secondary" onclick="selectProduct('GL','護具')">護具</button>
+      <button class="secondary" onclick="selectProduct('SK','鞋')">鞋</button>
+    </div>
+
+    <div id="sizeArea" style="display:none">
+      <button class="secondary" onclick="setSize('XS')">XS</button>
+      <button class="secondary" onclick="setSize('S')">S</button>
+      <button class="secondary" onclick="setSize('M')">M</button>
+      <button class="secondary" onclick="setSize('L')">L</button>
+      <button class="secondary" onclick="setSize('XL')">XL</button>
+    </div>
+
+    <div id="qtyArea" style="display:none">
+      <input id="qty" type="number" value="1" min="1">
+      <button class="primary" onclick="generateIn()">產生條碼</button>
+    </div>
+
+    <div id="result"></div>
+  </div>
+
+  <div id="outSection" class="section">
+    <h3>出貨</h3>
+    <input id="outCode" placeholder="輸入條碼，例如 MH-XS0001">
+    <button class="primary" onclick="stockOut()">確認出貨</button>
+  </div>
+
+  <div id="stockSection" class="section">
+    <div id="stockResult"></div>
+    <div id="logResult"></div>
+  </div>
+</div>
+
+<script>
+const users = {
+  jerry:{password:"0606",name:"佳祐"},
+  msmdick:{password:"1111",name:"土豆"},
+  h072012:{password:"2222",name:"小宇"},
+  zemo:{password:"3333",name:"阿澤"},
+  ma:{password:"5555",name:"小馬"},
+  chuu:{password:"6666",name:"莉筑"}
+};
+
+let current = "";
+let currentUserName = "";
+let isAdmin = false;
+
+let pCode = "", pName = "", size = "";
+let counter = {};
+let stock = {};
+let logs = [];
+
+function selectCoach(k){
+  current = k;
+  document.getElementById("title").innerText = users[k].name + " 登入";
+  document.getElementById("pw").value = "";
+  document.getElementById("modal").style.display = "block";
+}
+
+function loginUser(){
+  const pw = document.getElementById("pw").value;
+
+  if(!current || !users[current]){
+    alert("請先選擇教練");
+    return;
+  }
+
+  if(users[current].password !== pw){
+    alert("密碼錯誤");
+    return;
+  }
+
+  currentUserName = users[current].name;
+  isAdmin = (current === "jerry");
+
+  document.getElementById("loginArea").style.display = "none";
+  document.getElementById("main").style.display = "block";
+  document.getElementById("welcome").innerText = "歡迎 " + currentUserName;
+  closeModal();
+}
+
+function logout(){
+  current = "";
+  currentUserName = "";
+  isAdmin = false;
+  document.getElementById("main").style.display = "none";
+  document.getElementById("loginArea").style.display = "block";
+  document.querySelectorAll(".section").forEach(s => s.style.display = "none");
+  closeModal();
+}
+
+function closeModal(){
+  document.getElementById("modal").style.display = "none";
+  document.getElementById("pw").value = "";
+}
+
+function openSection(id){
+  document.querySelectorAll(".section").forEach(x => x.style.display = "none");
+
+  if(id === "inSection" && !isAdmin){
+    alert("只有佳祐可以進貨");
+    return;
+  }
+
+  document.getElementById(id).style.display = "block";
+
+  if(id === "stockSection"){
+    renderStock();
+    renderLogs();
+  }
+}
+
+function selectProduct(code,name){
+  pCode = code;
+  pName = name;
+  document.getElementById("sizeArea").style.display = "block";
+  document.getElementById("qtyArea").style.display = "none";
+}
+
+function setSize(s){
+  size = s;
+  document.getElementById("qtyArea").style.display = "block";
+}
+
+function generateIn(){
+  const q = parseInt(document.getElementById("qty").value || "0", 10);
+  if(!pCode || !size || !q || q < 1){
+    alert("請先選商品、尺寸、數量");
+    return;
+  }
+
+  const key = pCode + "-" + size;
+  if(!counter[key]) counter[key] = 1;
+
+  const result = document.getElementById("result");
+  result.innerHTML = "";
+
+  for(let i=0;i<q;i++){
+    const num = String(counter[key]).padStart(4,"0");
+    const code = pCode + "-" + size + num;
+
+    stock[code] = {
+      name: pName,
+      size: size,
+      code: code,
+      status: "in"
+    };
+
+    const div = document.createElement("div");
+    div.className = "label";
+    div.innerHTML = `${pName}<br>${size}<br><svg id="bc${code}"></svg><br>${code}`;
+    result.appendChild(div);
+
+    JsBarcode("#bc" + code, code, {
+      format: "CODE128",
+      displayValue: false,
+      width: 1.5,
+      height: 45,
+      margin: 2
+    });
+
+    counter[key]++;
+  }
+}
+
+function stockOut(){
+  const code = document.getElementById("outCode").value.trim().toUpperCase();
+
+  if(!stock[code]){
+    alert("查無此條碼");
+    return;
+  }
+
+  if(stock[code].status === "out"){
+    alert("這件已出貨");
+    return;
+  }
+
+  const item = stock[code];
+  stock[code].status = "out";
+
+  logs.push({
+    user: currentUserName,
+    name: item.name,
+    size: item.size,
+    code: item.code,
+    time: new Date().toLocaleString()
+  });
+
+  document.getElementById("outCode").value = "";
+  alert("出貨成功");
+}
+
+function renderStock(){
+  let summary = {};
+
+  for(const code in stock){
+    const item = stock[code];
+    const key = item.name + "__" + item.size;
+
+    if(!summary[key]){
+      summary[key] = {name:item.name, size:item.size, in:0, out:0};
+    }
+
+    if(item.status === "in") summary[key].in++;
+    else summary[key].out++;
+  }
+
+  let left = "<h3>📤 出貨數量</h3>";
+  left += "<table><tr><th>物品</th><th>尺寸</th><th>出貨數量</th></tr>";
+  const keys = Object.keys(summary);
+  if(keys.length === 0){
+    left += "<tr><td colspan='3'>目前沒有資料</td></tr>";
+  } else {
+    keys.forEach(k => {
+      const s = summary[k];
+      left += `<tr><td>${s.name}</td><td>${s.size}</td><td>${s.out}</td></tr>`;
+    });
+  }
+  left += "</table>";
+
+  let right = "<h3>📦 目前庫存</h3>";
+  right += "<table><tr><th>物品</th><th>尺寸</th><th>庫存</th></tr>";
+  if(keys.length === 0){
+    right += "<tr><td colspan='3'>目前沒有庫存</td></tr>";
+  } else {
+    keys.forEach(k => {
+      const s = summary[k];
+      right += `<tr><td>${s.name}</td><td>${s.size}</td><td>${s.in}</td></tr>`;
+    });
+  }
+  right += "</table>";
+
+  document.getElementById("stockResult").innerHTML =
+    `<div class="flex">
+      <div class="col">${left}</div>
+      <div class="col">${right}</div>
+    </div>`;
+}
+
+function renderLogs(){
+  let html = "<h3>📝 出貨紀錄</h3><table><tr><th>教練</th><th>物品</th><th>尺寸</th><th>條碼</th><th>時間</th></tr>";
+
+  if(logs.length === 0){
+    html += "<tr><td colspan='5'>目前沒有出貨紀錄</td></tr>";
+  } else {
+    logs.forEach(log => {
+      html += `<tr>
+        <td>${log.user}</td>
+        <td>${log.name}</td>
+        <td>${log.size}</td>
+        <td>${log.code}</td>
+        <td>${log.time}</td>
+      </tr>`;
+    });
+  }
+
+  html += "</table>";
+  document.getElementById("logResult").innerHTML = html;
+}
+</script>
+
+</body>
+</html>
