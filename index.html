@@ -14,10 +14,12 @@ body{margin:0;font-family:Arial;background:#d9f1ff;text-align:center}
 button{padding:12px 18px;margin:6px;font-size:18px;border-radius:10px;border:none;cursor:pointer}
 .primary{background:#0b3d91;color:white}
 .secondary{background:white;border:2px solid #0b3d91;color:#0b3d91}
-.modal{display:none;position:fixed;width:100%;height:100%;background:rgba(0,0,0,0.5)}
-.box{background:white;padding:20px;margin:15% auto;width:300px}
+.modal{display:none;position:fixed;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:999}
+.box{background:white;padding:20px;margin:15% auto;width:300px;border-radius:12px}
 .section{display:none;margin-top:20px}
 .label{border:1px solid #000;margin:10px;padding:10px}
+table{width:100%;border-collapse:collapse;margin-top:20px}
+td,th{border:1px solid #ccc;padding:8px}
 </style>
 </head>
 
@@ -45,29 +47,23 @@ button{padding:12px 18px;margin:6px;font-size:18px;border-radius:10px;border:non
 <div id="main" class="panel" style="display:none">
   <h2 id="welcome"></h2>
 
-  <button class="primary" onclick="openSection('inSection')">📦進貨</button>
-  <button class="primary" onclick="logout()">🚪登出</button>
+  <button onclick="openSection('inSection')">📦進貨</button>
+  <button onclick="openSection('outSection')">📤出貨</button>
+  <button onclick="openSection('stockSection')">📋庫存</button>
+  <button onclick="logout()">🚪登出</button>
 
   <!-- 進貨 -->
   <div id="inSection" class="section">
     <h3>進貨</h3>
 
-    <!-- 商品 -->
-    <div>
-      <button onclick="selectProduct('MH','梅花帽')">梅花帽</button>
-      <button onclick="selectProduct('GL','護具')">護具</button>
-      <button onclick="selectProduct('SK','鞋')">鞋</button>
-    </div>
+    <button onclick="selectProduct('MH','梅花帽')">梅花帽</button>
+    <button onclick="selectProduct('GL','護具')">護具</button>
 
-    <!-- 尺寸 -->
     <div id="sizeArea" style="display:none">
       <button onclick="setSize('XS')">XS</button>
       <button onclick="setSize('S')">S</button>
-      <button onclick="setSize('M')">M</button>
-      <button onclick="setSize('L')">L</button>
     </div>
 
-    <!-- 數量 -->
     <div id="qtyArea" style="display:none">
       <input id="qty" type="number" value="1"><br>
       <button onclick="generate()">產生條碼</button>
@@ -75,6 +71,17 @@ button{padding:12px 18px;margin:6px;font-size:18px;border-radius:10px;border:non
 
     <div id="result"></div>
   </div>
+
+  <!-- 出貨 -->
+  <div id="outSection" class="section">
+    <h3>出貨</h3>
+    <input id="outCode" placeholder="輸入條碼">
+    <button onclick="outItem()">出貨</button>
+  </div>
+
+  <!-- 庫存 -->
+  <div id="stockSection" class="section"></div>
+
 </div>
 
 <script>
@@ -84,12 +91,13 @@ const users={
   msmdick:{password:"1111",name:"土豆"}
 };
 
-let current="";
-let isAdmin=false;
-
-// 條碼
+let current="",isAdmin=false;
 let pCode="",pName="",size="";
 let counter={};
+
+// 庫存＆紀錄
+let stock={};
+let logs=[];
 
 // ===== 登入 =====
 function selectCoach(k){
@@ -100,7 +108,7 @@ function selectCoach(k){
 
 function login(){
   let pw=document.getElementById("pw").value;
-  if(users[current].password!=pw)return alert("密碼錯誤");
+  if(users[current].password!=pw)return alert("錯誤");
 
   isAdmin=(current==="jerry");
 
@@ -111,13 +119,10 @@ function login(){
   closeModal();
 }
 
-// ===== 登出（修正版）=====
+// ===== 登出 =====
 function logout(){
   current="";
   isAdmin=false;
-
-  document.getElementById("pw").value="";
-  document.getElementById("modal").style.display="none";
 
   document.getElementById("main").style.display="none";
   document.getElementById("loginArea").style.display="block";
@@ -125,7 +130,7 @@ function logout(){
   document.querySelectorAll(".section").forEach(s=>s.style.display="none");
 }
 
-// ===== 關閉登入框 =====
+// ===== modal =====
 function closeModal(){
   document.getElementById("modal").style.display="none";
   document.getElementById("pw").value="";
@@ -140,23 +145,24 @@ function openSection(id){
     return;
   }
 
+  if(id==="stockSection"){
+    showStock();
+  }
+
   document.getElementById(id).style.display="block";
 }
 
-// ===== 選商品 =====
-function selectProduct(code,name){
-  pCode=code;
-  pName=name;
+// ===== 進貨 =====
+function selectProduct(c,n){
+  pCode=c;pName=n;
   document.getElementById("sizeArea").style.display="block";
 }
 
-// ===== 尺寸 =====
 function setSize(s){
   size=s;
   document.getElementById("qtyArea").style.display="block";
 }
 
-// ===== 產生條碼 =====
 function generate(){
   let q=parseInt(document.getElementById("qty").value);
   let key=pCode+"-"+size;
@@ -170,19 +176,63 @@ function generate(){
     let num=String(counter[key]).padStart(4,"0");
     let code=pCode+"-"+size+num;
 
+    stock[code]={name:pName,size:size,status:"in"};
+
     let div=document.createElement("div");
     div.className="label";
-    div.innerHTML=`
-      ${pName}<br>${size}<br>
-      <svg id="bc${code}"></svg><br>
-      ${code}
-    `;
+    div.innerHTML=`${pName}<br>${size}<br><svg id="bc${code}"></svg><br>${code}`;
     result.appendChild(div);
 
     JsBarcode("#bc"+code,code);
 
     counter[key]++;
   }
+}
+
+// ===== 出貨 =====
+function outItem(){
+  let code=document.getElementById("outCode").value;
+
+  if(!stock[code]) return alert("找不到");
+
+  if(stock[code].status==="out") return alert("已出貨");
+
+  stock[code].status="out";
+
+  logs.push({
+    user:users[current].name,
+    code:code
+  });
+
+  alert("出貨成功");
+}
+
+// ===== 庫存 =====
+function showStock(){
+  let html="<h3>庫存</h3><table><tr><th>物品</th><th>尺寸</th><th>在庫</th><th>出貨</th></tr>";
+
+  let summary={};
+
+  for(let c in stock){
+    let i=stock[c];
+    let key=i.name+i.size;
+
+    if(!summary[key]){
+      summary[key]={name:i.name,size:i.size,in:0,out:0};
+    }
+
+    if(i.status==="in") summary[key].in++;
+    else summary[key].out++;
+  }
+
+  for(let k in summary){
+    let s=summary[k];
+    html+=`<tr><td>${s.name}</td><td>${s.size}</td><td>${s.in}</td><td>${s.out}</td></tr>`;
+  }
+
+  html+="</table>";
+
+  document.getElementById("stockSection").innerHTML=html;
 }
 </script>
 
