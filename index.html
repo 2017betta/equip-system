@@ -6,10 +6,10 @@
 <title>裝備平台</title>
 <style>
 body{
-  font-family:Arial,sans-serif;
-  text-align:center;
   margin:0;
+  font-family:Arial,sans-serif;
   background:#d9f1ff;
+  text-align:center;
 }
 .topbar{
   background:#0b3d91;
@@ -17,6 +17,14 @@ body{
   padding:16px;
   font-size:28px;
   font-weight:bold;
+}
+.panel{
+  background:white;
+  width:min(92vw,900px);
+  margin:24px auto;
+  padding:24px;
+  border-radius:16px;
+  box-shadow:0 4px 16px rgba(0,0,0,0.08);
 }
 button{
   padding:14px 22px;
@@ -34,14 +42,6 @@ button{
   background:white;
   color:#0b3d91;
   border:2px solid #0b3d91;
-}
-.panel{
-  background:white;
-  width:min(92vw,900px);
-  margin:24px auto;
-  padding:24px;
-  border-radius:16px;
-  box-shadow:0 4px 16px rgba(0,0,0,0.08);
 }
 .modal{
   display:none;
@@ -71,19 +71,15 @@ input{
   flex-wrap:wrap;
   justify-content:center;
   gap:8px;
+  margin-top:16px;
 }
 .section{
   display:none;
   margin-top:20px;
-}
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:16px;
-}
-th,td{
-  border:1px solid #cfd8e3;
-  padding:10px;
+  padding:20px;
+  border:1px solid #ddd;
+  border-radius:12px;
+  background:#f9fbff;
 }
 </style>
 </head>
@@ -103,7 +99,7 @@ th,td{
 
 <div id="modal" class="modal">
   <div class="box">
-    <h3 id="title"></h3>
+    <h3 id="title">登入</h3>
     <input id="pw" type="password" placeholder="密碼">
     <br>
     <button class="primary" onclick="login()">登入</button>
@@ -114,32 +110,32 @@ th,td{
 <div id="main" class="panel">
   <h2 id="welcome"></h2>
 
-  <div class="action-bar">
+  <div class="action-bar" id="actionBar">
     <button class="primary" onclick="openSection('inSection')">📦 進貨</button>
     <button class="primary" onclick="openSection('outSection')">📤 出貨</button>
     <button class="primary" onclick="openSection('stockSection')">📋 庫存</button>
-    <button class="primary" onclick="openSection('addSection')">➕ 新增商品</button>
+    <button class="primary" id="addBtn" onclick="openSection('addSection')">➕ 新增商品</button>
     <button class="primary" onclick="logout()">🚪 登出</button>
   </div>
 
   <div id="inSection" class="section">
-    <h3>進貨</h3>
-    <p>先做基本版，下一步幫你加回條碼與批量進貨。</p>
+    <h3>進貨區</h3>
+    <p>登入後主畫面正常顯示。</p>
   </div>
 
   <div id="outSection" class="section">
-    <h3>出貨</h3>
-    <p>先做基本版，下一步幫你加回掃描與條碼出貨。</p>
+    <h3>出貨區</h3>
+    <p>這裡之後再加出貨功能。</p>
   </div>
 
   <div id="stockSection" class="section">
-    <h3>庫存</h3>
-    <p>先做基本版，下一步幫你加回左右分欄與統計。</p>
+    <h3>庫存區</h3>
+    <p>這裡之後再加庫存功能。</p>
   </div>
 
   <div id="addSection" class="section">
-    <h3>新增商品</h3>
-    <p>只有佳祐可以新增商品。</p>
+    <h3>新增商品區</h3>
+    <p>只有佳祐可以看到這個按鈕。</p>
   </div>
 </div>
 
@@ -191,7 +187,7 @@ function login(){
   document.getElementById("welcome").innerText = "歡迎 " + currentUserName;
 
   if(!isAdmin){
-    document.querySelector("button[onclick=\"openSection('addSection')\"]").style.display = "none";
+    document.getElementById("addBtn").style.display = "none";
   }
 }
 
