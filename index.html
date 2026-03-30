@@ -131,6 +131,14 @@ td,th{
   border-radius:14px;
   text-align:center;
 }
+.sub-box{
+  margin:15px auto;
+  padding:15px;
+  background:#f7fbff;
+  border:1px solid #b9d7ec;
+  border-radius:10px;
+  max-width:1000px;
+}
 
 /* iPad 大字模式 */
 .big-mode{
@@ -166,7 +174,7 @@ td,th{
   .label-grid{grid-template-columns:1fr}
 }
 @media print{
-  .topbar,.no-print,.modal,#mainButtons,#stockPanel,#logPanel,#reportPanel{
+  .topbar,.no-print,.modal,#mainButtons,#stockPanel,#logPanel,#reportPanel,#loginArea{
     display:none !important;
   }
   body{background:white}
@@ -225,6 +233,7 @@ td,th{
     <button class="big-btn" onclick="toggleBigMode()">🔍 iPad大字模式</button>
     <button class="big-btn" onclick="exportExcel()">📁 Excel</button>
     <button class="big-btn" onclick="exportStatisticExcel()">🗓️ 月年統計</button>
+    <button class="big-btn" onclick="resetData()">🗑️ 清空資料</button>
     <button class="big-btn" onclick="logout()">🚪 登出</button>
   </div>
 
@@ -232,7 +241,7 @@ td,th{
   <div id="inPanel" class="panel">
     <h3 class="no-print">📦 進貨</h3>
 
-    <div class="no-print">
+    <div class="sub-box no-print">
       <h4>方式 1：批量新增新品</h4>
       <div id="productButtons"></div>
 
@@ -251,8 +260,7 @@ td,th{
       </div>
     </div>
 
-    <div class="no-print">
-      <hr>
+    <div class="sub-box no-print">
       <h4>方式 2：掃描進貨（既有條碼回庫）</h4>
       <input id="inCode" placeholder="輸入條碼，例如 MH-XS0001">
       <button class="big-btn" onclick="manualIn()">手動回庫</button>
@@ -336,6 +344,33 @@ var scannerOutObj = null;
 var reportChart = null;
 const LOW_STOCK_LIMIT = 3;
 
+// ===== 保存 =====
+function saveData(){
+  localStorage.setItem("equip_stock", JSON.stringify(stock));
+  localStorage.setItem("equip_logs", JSON.stringify(logs));
+  localStorage.setItem("equip_products", JSON.stringify(products));
+  localStorage.setItem("equip_counter", JSON.stringify(counter));
+}
+function loadData(){
+  const s = localStorage.getItem("equip_stock");
+  const l = localStorage.getItem("equip_logs");
+  const p = localStorage.getItem("equip_products");
+  const c = localStorage.getItem("equip_counter");
+  if(s) stock = JSON.parse(s);
+  if(l) logs = JSON.parse(l);
+  if(p) products = JSON.parse(p);
+  if(c) counter = JSON.parse(c);
+}
+function resetData(){
+  if(confirm("確定要清空全部資料？")){
+    localStorage.removeItem("equip_stock");
+    localStorage.removeItem("equip_logs");
+    localStorage.removeItem("equip_products");
+    localStorage.removeItem("equip_counter");
+    location.reload();
+  }
+}
+
 // 登入
 function selectCoach(key){
   currentLoginKey = key;
@@ -382,9 +417,12 @@ function hidePanels(){
     const el = document.getElementById(id);
     if(el) el.style.display = "none";
   });
-  if(document.getElementById("sizePanel")) document.getElementById("sizePanel").style.display = "none";
-  if(document.getElementById("qtyBox")) document.getElementById("qtyBox").style.display = "none";
-  if(document.getElementById("result")) document.getElementById("result").innerHTML = "";
+  const sizePanel = document.getElementById("sizePanel");
+  const qtyBox = document.getElementById("qtyBox");
+  const result = document.getElementById("result");
+  if(sizePanel) sizePanel.style.display = "none";
+  if(qtyBox) qtyBox.style.display = "none";
+  if(result) result.innerHTML = "";
 }
 
 function openIn(){
@@ -463,6 +501,7 @@ async function batchIn(){
   }
 
   document.getElementById("result").innerText = "進貨完成";
+  saveData();
   await notifyLowStock();
 }
 
@@ -477,6 +516,7 @@ async function processIn(code){
   stock[code].status = "in";
   stock[code].inTime = new Date().toLocaleString();
   document.getElementById("inCode").value = "";
+  saveData();
   await notifyLowStock();
   alert("已進貨：" + code);
 }
@@ -525,6 +565,7 @@ async function processOut(c){
   });
 
   document.getElementById("outCode").value = "";
+  saveData();
   await notifyLowStock();
   alert("出貨成功");
 }
@@ -627,6 +668,7 @@ function add(){
   document.getElementById("name").value = "";
   document.getElementById("code").value = "";
   renderProducts();
+  saveData();
   alert("新增完成");
 }
 
@@ -731,7 +773,7 @@ function toggleBigMode(){
   document.body.classList.toggle("big-mode");
 }
 
-// 低庫存通知（沿用前面接口）
+// 低庫存通知
 function getLowStockItems(){
   const summary = {};
   for(const code in stock){
@@ -761,6 +803,9 @@ async function notifyLowStock(){
     console.error("低庫存通知失敗", err);
   }
 }
+
+// 啟動讀取資料
+loadData();
 </script>
 
 </body>
