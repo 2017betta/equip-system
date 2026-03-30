@@ -37,6 +37,7 @@ button{padding:12px 18px;margin:6px;font-size:18px;border-radius:10px;border:non
     <h3 id="title"></h3>
     <input id="pw" type="password"><br><br>
     <button onclick="login()">登入</button>
+    <button onclick="closeModal()">取消</button>
   </div>
 </div>
 
@@ -45,7 +46,7 @@ button{padding:12px 18px;margin:6px;font-size:18px;border-radius:10px;border:non
   <h2 id="welcome"></h2>
 
   <button class="primary" onclick="openSection('inSection')">📦進貨</button>
-  <button class="primary" onclick="logout()">登出</button>
+  <button class="primary" onclick="logout()">🚪登出</button>
 
   <!-- 進貨 -->
   <div id="inSection" class="section">
@@ -77,6 +78,7 @@ button{padding:12px 18px;margin:6px;font-size:18px;border-radius:10px;border:non
 </div>
 
 <script>
+// 使用者
 const users={
   jerry:{password:"0606",name:"佳祐"},
   msmdick:{password:"1111",name:"土豆"}
@@ -85,28 +87,51 @@ const users={
 let current="";
 let isAdmin=false;
 
+// 條碼
 let pCode="",pName="",size="";
 let counter={};
 
-// 登入
+// ===== 登入 =====
 function selectCoach(k){
   current=k;
   document.getElementById("title").innerText=users[k].name;
   document.getElementById("modal").style.display="block";
 }
+
 function login(){
   let pw=document.getElementById("pw").value;
-  if(users[current].password!=pw)return alert("錯誤");
+  if(users[current].password!=pw)return alert("密碼錯誤");
 
   isAdmin=(current==="jerry");
 
   document.getElementById("loginArea").style.display="none";
   document.getElementById("main").style.display="block";
   document.getElementById("welcome").innerText="歡迎 "+users[current].name;
-}
-function logout(){location.reload();}
 
-// 切換
+  closeModal();
+}
+
+// ===== 登出（修正版）=====
+function logout(){
+  current="";
+  isAdmin=false;
+
+  document.getElementById("pw").value="";
+  document.getElementById("modal").style.display="none";
+
+  document.getElementById("main").style.display="none";
+  document.getElementById("loginArea").style.display="block";
+
+  document.querySelectorAll(".section").forEach(s=>s.style.display="none");
+}
+
+// ===== 關閉登入框 =====
+function closeModal(){
+  document.getElementById("modal").style.display="none";
+  document.getElementById("pw").value="";
+}
+
+// ===== 切頁 =====
 function openSection(id){
   document.querySelectorAll(".section").forEach(x=>x.style.display="none");
 
@@ -118,24 +143,24 @@ function openSection(id){
   document.getElementById(id).style.display="block";
 }
 
-// 選商品
+// ===== 選商品 =====
 function selectProduct(code,name){
   pCode=code;
   pName=name;
   document.getElementById("sizeArea").style.display="block";
 }
 
-// 尺寸
+// ===== 尺寸 =====
 function setSize(s){
   size=s;
   document.getElementById("qtyArea").style.display="block";
 }
 
-// 產生條碼
+// ===== 產生條碼 =====
 function generate(){
   let q=parseInt(document.getElementById("qty").value);
-
   let key=pCode+"-"+size;
+
   if(!counter[key]) counter[key]=1;
 
   let result=document.getElementById("result");
