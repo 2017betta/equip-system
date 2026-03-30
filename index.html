@@ -1,12 +1,48 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>測試登入</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>裝備平台</title>
 <style>
-body{font-family:Arial;text-align:center;padding:50px}
-button{padding:15px 25px;margin:10px;font-size:18px}
+body{
+  font-family:Arial,sans-serif;
+  text-align:center;
+  margin:0;
+  background:#d9f1ff;
+}
+.topbar{
+  background:#0b3d91;
+  color:white;
+  padding:16px;
+  font-size:28px;
+  font-weight:bold;
+}
+button{
+  padding:14px 22px;
+  margin:8px;
+  font-size:18px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+}
+.primary{
+  background:#0b3d91;
+  color:white;
+}
+.secondary{
+  background:white;
+  color:#0b3d91;
+  border:2px solid #0b3d91;
+}
+.panel{
+  background:white;
+  width:min(92vw,900px);
+  margin:24px auto;
+  padding:24px;
+  border-radius:16px;
+  box-shadow:0 4px 16px rgba(0,0,0,0.08);
+}
 .modal{
   display:none;
   position:fixed;
@@ -17,50 +53,167 @@ button{padding:15px 25px;margin:10px;font-size:18px}
 .box{
   background:white;
   padding:20px;
-  margin:20% auto;
-  width:300px;
+  margin:14% auto;
+  width:min(90vw,320px);
+  border-radius:14px;
+}
+input{
+  padding:12px;
+  width:80%;
+  font-size:18px;
+  margin:10px 0;
+}
+#main{
+  display:none;
+}
+.action-bar{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:8px;
+}
+.section{
+  display:none;
+  margin-top:20px;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:16px;
+}
+th,td{
+  border:1px solid #cfd8e3;
+  padding:10px;
 }
 </style>
 </head>
-
 <body>
 
-<h2>選擇登入</h2>
+<div class="topbar">裝備平台</div>
 
-<button onclick="selectCoach('jerry')">佳祐</button>
-<button onclick="selectCoach('msmdick')">土豆</button>
+<div id="loginArea" class="panel">
+  <h2>選擇登入</h2>
+  <button class="secondary" onclick="selectCoach('jerry')">佳祐</button>
+  <button class="secondary" onclick="selectCoach('msmdick')">土豆教練</button>
+  <button class="secondary" onclick="selectCoach('h072012')">小宇教練</button>
+  <button class="secondary" onclick="selectCoach('zemo')">阿澤教練</button>
+  <button class="secondary" onclick="selectCoach('ma')">小馬教練</button>
+  <button class="secondary" onclick="selectCoach('chuu')">莉筑教練</button>
+</div>
 
 <div id="modal" class="modal">
   <div class="box">
     <h3 id="title"></h3>
     <input id="pw" type="password" placeholder="密碼">
-    <br><br>
-    <button onclick="login()">登入</button>
+    <br>
+    <button class="primary" onclick="login()">登入</button>
+    <button class="secondary" onclick="closeModal()">取消</button>
+  </div>
+</div>
+
+<div id="main" class="panel">
+  <h2 id="welcome"></h2>
+
+  <div class="action-bar">
+    <button class="primary" onclick="openSection('inSection')">📦 進貨</button>
+    <button class="primary" onclick="openSection('outSection')">📤 出貨</button>
+    <button class="primary" onclick="openSection('stockSection')">📋 庫存</button>
+    <button class="primary" onclick="openSection('addSection')">➕ 新增商品</button>
+    <button class="primary" onclick="logout()">🚪 登出</button>
+  </div>
+
+  <div id="inSection" class="section">
+    <h3>進貨</h3>
+    <p>先做基本版，下一步幫你加回條碼與批量進貨。</p>
+  </div>
+
+  <div id="outSection" class="section">
+    <h3>出貨</h3>
+    <p>先做基本版，下一步幫你加回掃描與條碼出貨。</p>
+  </div>
+
+  <div id="stockSection" class="section">
+    <h3>庫存</h3>
+    <p>先做基本版，下一步幫你加回左右分欄與統計。</p>
+  </div>
+
+  <div id="addSection" class="section">
+    <h3>新增商品</h3>
+    <p>只有佳祐可以新增商品。</p>
   </div>
 </div>
 
 <script>
 const users = {
-  jerry:{password:"0606",name:"佳祐"},
-  msmdick:{password:"1111",name:"土豆"}
+  jerry: { password: "0606", name: "佳祐" },
+  msmdick: { password: "1111", name: "土豆教練" },
+  h072012: { password: "2222", name: "小宇教練" },
+  zemo: { password: "3333", name: "阿澤教練" },
+  ma: { password: "5555", name: "小馬教練" },
+  chuu: { password: "6666", name: "莉筑教練" }
 };
 
-let current="";
+let current = "";
+let currentUserName = "";
+let isAdmin = false;
 
 function selectCoach(key){
   current = key;
-  document.getElementById("title").innerText = users[key].name;
+  document.getElementById("title").innerText = "登入 - " + users[key].name;
+  document.getElementById("pw").value = "";
   document.getElementById("modal").style.display = "block";
+}
+
+function closeModal(){
+  document.getElementById("modal").style.display = "none";
+  current = "";
 }
 
 function login(){
   const pw = document.getElementById("pw").value;
 
-  if(users[current].password === pw){
-    alert("登入成功");
-  }else{
-    alert("錯誤");
+  if(!current || !users[current]){
+    alert("請先選擇教練");
+    return;
   }
+
+  if(users[current].password !== pw){
+    alert("密碼錯誤");
+    return;
+  }
+
+  currentUserName = users[current].name;
+  isAdmin = (current === "jerry");
+
+  document.getElementById("modal").style.display = "none";
+  document.getElementById("loginArea").style.display = "none";
+  document.getElementById("main").style.display = "block";
+  document.getElementById("welcome").innerText = "歡迎 " + currentUserName;
+
+  if(!isAdmin){
+    document.querySelector("button[onclick=\"openSection('addSection')\"]").style.display = "none";
+  }
+}
+
+function logout(){
+  location.reload();
+}
+
+function openSection(id){
+  const all = document.querySelectorAll(".section");
+  all.forEach(el => el.style.display = "none");
+
+  if(id === "inSection" && !isAdmin){
+    alert("只有佳祐可以進貨");
+    return;
+  }
+
+  if(id === "addSection" && !isAdmin){
+    alert("只有佳祐可以新增商品");
+    return;
+  }
+
+  document.getElementById(id).style.display = "block";
 }
 </script>
 
