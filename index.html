@@ -4,212 +4,160 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>裝備平台</title>
+
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+
 <style>
-body{
-  margin:0;
-  font-family:Arial,sans-serif;
-  background:#d9f1ff;
-  text-align:center;
-}
-.topbar{
-  background:#0b3d91;
-  color:white;
-  padding:16px;
-  font-size:28px;
-  font-weight:bold;
-}
-.panel{
-  background:white;
-  width:min(92vw,900px);
-  margin:24px auto;
-  padding:24px;
-  border-radius:16px;
-  box-shadow:0 4px 16px rgba(0,0,0,0.08);
-}
-button{
-  padding:14px 22px;
-  margin:8px;
-  font-size:18px;
-  border:none;
-  border-radius:10px;
-  cursor:pointer;
-}
-.primary{
-  background:#0b3d91;
-  color:white;
-}
-.secondary{
-  background:white;
-  color:#0b3d91;
-  border:2px solid #0b3d91;
-}
-.modal{
-  display:none;
-  position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
-  background:rgba(0,0,0,0.5);
-}
-.box{
-  background:white;
-  padding:20px;
-  margin:14% auto;
-  width:min(90vw,320px);
-  border-radius:14px;
-}
-input{
-  padding:12px;
-  width:80%;
-  font-size:18px;
-  margin:10px 0;
-}
-#main{
-  display:none;
-}
-.action-bar{
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center;
-  gap:8px;
-  margin-top:16px;
-}
-.section{
-  display:none;
-  margin-top:20px;
-  padding:20px;
-  border:1px solid #ddd;
-  border-radius:12px;
-  background:#f9fbff;
-}
+body{margin:0;font-family:Arial;background:#d9f1ff;text-align:center}
+.topbar{background:#0b3d91;color:white;padding:16px;font-size:28px}
+.panel{background:white;width:min(92vw,900px);margin:24px auto;padding:24px;border-radius:16px}
+button{padding:12px 18px;margin:6px;font-size:18px;border-radius:10px;border:none;cursor:pointer}
+.primary{background:#0b3d91;color:white}
+.secondary{background:white;border:2px solid #0b3d91;color:#0b3d91}
+.modal{display:none;position:fixed;width:100%;height:100%;background:rgba(0,0,0,0.5)}
+.box{background:white;padding:20px;margin:15% auto;width:300px}
+.section{display:none;margin-top:20px}
+.label{border:1px solid #000;margin:10px;padding:10px}
 </style>
 </head>
+
 <body>
 
 <div class="topbar">裝備平台</div>
 
+<!-- 登入 -->
 <div id="loginArea" class="panel">
-  <h2>選擇登入</h2>
+  <h2>登入</h2>
   <button class="secondary" onclick="selectCoach('jerry')">佳祐</button>
-  <button class="secondary" onclick="selectCoach('msmdick')">土豆教練</button>
-  <button class="secondary" onclick="selectCoach('h072012')">小宇教練</button>
-  <button class="secondary" onclick="selectCoach('zemo')">阿澤教練</button>
-  <button class="secondary" onclick="selectCoach('ma')">小馬教練</button>
-  <button class="secondary" onclick="selectCoach('chuu')">莉筑教練</button>
+  <button class="secondary" onclick="selectCoach('msmdick')">土豆</button>
 </div>
 
 <div id="modal" class="modal">
   <div class="box">
-    <h3 id="title">登入</h3>
-    <input id="pw" type="password" placeholder="密碼">
-    <br>
-    <button class="primary" onclick="login()">登入</button>
-    <button class="secondary" onclick="closeModal()">取消</button>
+    <h3 id="title"></h3>
+    <input id="pw" type="password"><br><br>
+    <button onclick="login()">登入</button>
   </div>
 </div>
 
-<div id="main" class="panel">
+<!-- 主畫面 -->
+<div id="main" class="panel" style="display:none">
   <h2 id="welcome"></h2>
 
-  <div class="action-bar" id="actionBar">
-    <button class="primary" onclick="openSection('inSection')">📦 進貨</button>
-    <button class="primary" onclick="openSection('outSection')">📤 出貨</button>
-    <button class="primary" onclick="openSection('stockSection')">📋 庫存</button>
-    <button class="primary" id="addBtn" onclick="openSection('addSection')">➕ 新增商品</button>
-    <button class="primary" onclick="logout()">🚪 登出</button>
-  </div>
+  <button class="primary" onclick="openSection('inSection')">📦進貨</button>
+  <button class="primary" onclick="logout()">登出</button>
 
+  <!-- 進貨 -->
   <div id="inSection" class="section">
-    <h3>進貨區</h3>
-    <p>登入後主畫面正常顯示。</p>
-  </div>
+    <h3>進貨</h3>
 
-  <div id="outSection" class="section">
-    <h3>出貨區</h3>
-    <p>這裡之後再加出貨功能。</p>
-  </div>
+    <!-- 商品 -->
+    <div>
+      <button onclick="selectProduct('MH','梅花帽')">梅花帽</button>
+      <button onclick="selectProduct('GL','護具')">護具</button>
+      <button onclick="selectProduct('SK','鞋')">鞋</button>
+    </div>
 
-  <div id="stockSection" class="section">
-    <h3>庫存區</h3>
-    <p>這裡之後再加庫存功能。</p>
-  </div>
+    <!-- 尺寸 -->
+    <div id="sizeArea" style="display:none">
+      <button onclick="setSize('XS')">XS</button>
+      <button onclick="setSize('S')">S</button>
+      <button onclick="setSize('M')">M</button>
+      <button onclick="setSize('L')">L</button>
+    </div>
 
-  <div id="addSection" class="section">
-    <h3>新增商品區</h3>
-    <p>只有佳祐可以看到這個按鈕。</p>
+    <!-- 數量 -->
+    <div id="qtyArea" style="display:none">
+      <input id="qty" type="number" value="1"><br>
+      <button onclick="generate()">產生條碼</button>
+    </div>
+
+    <div id="result"></div>
   </div>
 </div>
 
 <script>
-const users = {
-  jerry: { password: "0606", name: "佳祐" },
-  msmdick: { password: "1111", name: "土豆教練" },
-  h072012: { password: "2222", name: "小宇教練" },
-  zemo: { password: "3333", name: "阿澤教練" },
-  ma: { password: "5555", name: "小馬教練" },
-  chuu: { password: "6666", name: "莉筑教練" }
+const users={
+  jerry:{password:"0606",name:"佳祐"},
+  msmdick:{password:"1111",name:"土豆"}
 };
 
-let current = "";
-let currentUserName = "";
-let isAdmin = false;
+let current="";
+let isAdmin=false;
 
-function selectCoach(key){
-  current = key;
-  document.getElementById("title").innerText = "登入 - " + users[key].name;
-  document.getElementById("pw").value = "";
-  document.getElementById("modal").style.display = "block";
+let pCode="",pName="",size="";
+let counter={};
+
+// 登入
+function selectCoach(k){
+  current=k;
+  document.getElementById("title").innerText=users[k].name;
+  document.getElementById("modal").style.display="block";
 }
-
-function closeModal(){
-  document.getElementById("modal").style.display = "none";
-  current = "";
-}
-
 function login(){
-  const pw = document.getElementById("pw").value;
+  let pw=document.getElementById("pw").value;
+  if(users[current].password!=pw)return alert("錯誤");
 
-  if(!current || !users[current]){
-    alert("請先選擇教練");
-    return;
-  }
+  isAdmin=(current==="jerry");
 
-  if(users[current].password !== pw){
-    alert("密碼錯誤");
-    return;
-  }
-
-  currentUserName = users[current].name;
-  isAdmin = (current === "jerry");
-
-  document.getElementById("modal").style.display = "none";
-  document.getElementById("loginArea").style.display = "none";
-  document.getElementById("main").style.display = "block";
-  document.getElementById("welcome").innerText = "歡迎 " + currentUserName;
-
-  if(!isAdmin){
-    document.getElementById("addBtn").style.display = "none";
-  }
+  document.getElementById("loginArea").style.display="none";
+  document.getElementById("main").style.display="block";
+  document.getElementById("welcome").innerText="歡迎 "+users[current].name;
 }
+function logout(){location.reload();}
 
-function logout(){
-  location.reload();
-}
-
+// 切換
 function openSection(id){
-  const all = document.querySelectorAll(".section");
-  all.forEach(el => el.style.display = "none");
+  document.querySelectorAll(".section").forEach(x=>x.style.display="none");
 
-  if(id === "inSection" && !isAdmin){
+  if(id==="inSection" && !isAdmin){
     alert("只有佳祐可以進貨");
     return;
   }
 
-  if(id === "addSection" && !isAdmin){
-    alert("只有佳祐可以新增商品");
-    return;
-  }
+  document.getElementById(id).style.display="block";
+}
 
-  document.getElementById(id).style.display = "block";
+// 選商品
+function selectProduct(code,name){
+  pCode=code;
+  pName=name;
+  document.getElementById("sizeArea").style.display="block";
+}
+
+// 尺寸
+function setSize(s){
+  size=s;
+  document.getElementById("qtyArea").style.display="block";
+}
+
+// 產生條碼
+function generate(){
+  let q=parseInt(document.getElementById("qty").value);
+
+  let key=pCode+"-"+size;
+  if(!counter[key]) counter[key]=1;
+
+  let result=document.getElementById("result");
+  result.innerHTML="";
+
+  for(let i=0;i<q;i++){
+    let num=String(counter[key]).padStart(4,"0");
+    let code=pCode+"-"+size+num;
+
+    let div=document.createElement("div");
+    div.className="label";
+    div.innerHTML=`
+      ${pName}<br>${size}<br>
+      <svg id="bc${code}"></svg><br>
+      ${code}
+    `;
+    result.appendChild(div);
+
+    JsBarcode("#bc"+code,code);
+
+    counter[key]++;
+  }
 }
 </script>
 
