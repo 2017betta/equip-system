@@ -1,0 +1,427 @@
+[index_all_modes.html](https://github.com/user-attachments/files/26354032/index_all_modes.html)
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>裝備平台｜完整版</title>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#d9f1ff;color:#111;text-align:center}
+.topbar{background:#0b3d91;color:#fff;padding:16px;font-size:28px;font-weight:bold}
+.panel{background:#fff;width:min(94vw,1100px);margin:24px auto;padding:24px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,.08)}
+button{padding:12px 18px;margin:6px;font-size:18px;border-radius:10px;border:none;cursor:pointer}
+.primary{background:#0b3d91;color:#fff}
+.secondary{background:#fff;border:2px solid #0b3d91;color:#0b3d91}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:999}
+.box{background:#fff;padding:20px;margin:14% auto;width:min(90vw,340px);border-radius:12px}
+.section{display:none;margin-top:20px}
+.label-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.label{border:1px solid #000;padding:10px;border-radius:10px;background:#fff}
+input,select{padding:10px;font-size:16px;border-radius:8px;border:1px solid #bbb;margin:6px}
+table{width:100%;border-collapse:collapse;margin-top:16px}
+th,td{border:1px solid #ccc;padding:8px}
+.flex{display:flex;flex-wrap:wrap;gap:20px;justify-content:center}
+.col{flex:1;min-width:320px}
+.notice{font-size:14px;color:#666}
+#readerIn,#readerOut{width:min(92vw,420px);margin:12px auto}
+.big-mode{font-size:1.15em}
+.big-mode .topbar{font-size:34px}
+.big-mode button{font-size:22px;padding:16px 24px}
+.big-mode input,.big-mode select{font-size:20px;padding:14px}
+.big-mode table{font-size:20px}
+@media (max-width:900px){.label-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:600px){.label-grid{grid-template-columns:1fr}}
+@media print{
+.topbar,.no-print,.modal,#mainButtons,#stockPanel,#logPanel,#reportPanel,#loginArea{display:none!important}
+body{background:#fff}
+#inPanel{display:block!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;border:none!important;box-shadow:none!important}
+#labels{display:grid!important;grid-template-columns:repeat(3,1fr);gap:8px;padding:0}
+}
+</style>
+</head>
+<body>
+<div class="topbar">裝備平台｜完整版</div>
+
+<div id="loginArea" class="panel">
+  <h2>登入</h2>
+  <button class="secondary" onclick="selectCoach('jerry')">佳祐</button>
+  <button class="secondary" onclick="selectCoach('msmdick')">土豆</button>
+  <button class="secondary" onclick="selectCoach('h072012')">小宇</button>
+  <button class="secondary" onclick="selectCoach('zemo')">阿澤</button>
+  <button class="secondary" onclick="selectCoach('ma')">小馬</button>
+  <button class="secondary" onclick="selectCoach('chuu')">莉筑</button>
+</div>
+
+<div id="modal" class="modal">
+  <div class="box">
+    <h3 id="title">登入</h3>
+    <input id="pw" type="password" placeholder="密碼"><br><br>
+    <button class="primary" onclick="loginUser()">登入</button>
+    <button class="secondary" onclick="closeModal()">取消</button>
+  </div>
+</div>
+
+<div id="main" class="panel" style="display:none">
+  <h2 id="welcome"></h2>
+
+  <div id="mainButtons" class="no-print">
+    <button class="primary" onclick="openSection('inPanel')">📦進貨</button>
+    <button class="primary" onclick="openSection('outPanel')">📤出貨</button>
+    <button class="primary" onclick="openSection('addPanel')">➕新增商品</button>
+    <button class="primary" onclick="showStock()">📋庫存</button>
+    <button class="primary" onclick="showReport()">📊POS報表</button>
+    <button class="primary" onclick="toggleBigMode()">🔍大字模式</button>
+    <button class="primary" onclick="exportExcel()">📁Excel</button>
+    <button class="primary" onclick="exportStatsExcel()">🗓️月年統計</button>
+    <button class="primary" onclick="resetData()">🗑️清空資料</button>
+    <button class="primary" onclick="logout()">🚪登出</button>
+  </div>
+
+  <div id="inPanel" class="section">
+    <h3>📦進貨</h3>
+    <p class="notice">只有佳祐可以進貨</p>
+    <div class="no-print">
+      <h4>方式 1：批量新增新品</h4>
+      <div id="productButtons"></div>
+      <div id="sizeArea" style="display:none">
+        <button class="secondary" onclick="setSize('XS')">XS</button>
+        <button class="secondary" onclick="setSize('S')">S</button>
+        <button class="secondary" onclick="setSize('M')">M</button>
+        <button class="secondary" onclick="setSize('L')">L</button>
+        <button class="secondary" onclick="setSize('XL')">XL</button>
+        <button class="secondary" onclick="setSize('F')">FREE</button>
+      </div>
+      <div id="qtyArea" style="display:none">
+        <input id="qty" type="number" value="1" min="1">
+        <button class="primary" onclick="generateIn()">產生條碼</button>
+      </div>
+    </div>
+    <div class="no-print" style="margin-top:18px">
+      <h4>方式 2：掃描進貨（既有條碼回庫）</h4>
+      <input id="inCode" placeholder="輸入條碼，例如 MH-XS0001">
+      <button class="primary" onclick="manualIn()">手動回庫</button>
+      <div id="readerIn"></div>
+      <button class="primary" onclick="scanIn()">開始掃描進貨</button>
+      <button class="secondary" onclick="stopScanIn()">停止掃描進貨</button>
+      <div class="notice">把已存在的條碼重新放回庫存。</div>
+    </div>
+    <div id="result" style="margin-top:18px"></div>
+    <button class="primary no-print" onclick="window.print()">🖨️列印貼紙</button>
+    <div id="labels" class="label-grid"></div>
+  </div>
+
+  <div id="outPanel" class="section">
+    <h3>📤出貨</h3>
+    <input id="outCode" placeholder="輸入條碼，例如 MH-XS0001">
+    <button class="primary" onclick="stockOut()">確認出貨</button>
+    <div style="margin-top:18px">
+      <h4>手機 / iPad 掃描出貨</h4>
+      <div id="readerOut"></div>
+      <button class="primary" onclick="scanOut()">開始掃描出貨</button>
+      <button class="secondary" onclick="stopScanOut()">停止掃描出貨</button>
+    </div>
+  </div>
+
+  <div id="addPanel" class="section">
+    <h3>➕新增商品</h3>
+    <p class="notice">只有佳祐可以新增商品</p>
+    <input id="newName" placeholder="商品名稱，例如 手套">
+    <input id="newCode" placeholder="簡碼，例如 GT">
+    <button class="primary" onclick="addProduct()">新增</button>
+  </div>
+
+  <div id="stockPanel" class="section"></div>
+  <div id="logPanel" class="section"></div>
+
+  <div id="reportPanel" class="section">
+    <h3>📊POS 報表中心</h3>
+    <div class="no-print">
+      <button class="secondary" onclick="drawMonthlyChart()">月統計</button>
+      <button class="secondary" onclick="drawYearlyChart()">年統計</button>
+    </div>
+    <div style="max-width:900px;margin:auto">
+      <canvas id="reportChart"></canvas>
+    </div>
+    <div id="reportSummary" style="margin-top:20px"></div>
+  </div>
+</div>
+
+<script>
+const users={jerry:{password:"0606",name:"佳祐"},msmdick:{password:"1111",name:"土豆"},h072012:{password:"2222",name:"小宇"},zemo:{password:"3333",name:"阿澤"},ma:{password:"5555",name:"小馬"},chuu:{password:"6666",name:"莉筑"}};
+let products={MH:"梅花帽",GL:"護具",SK:"鞋"};
+let stock={},logs=[],counter={};
+let current="",currentUserName="",isAdmin=false;
+let pCode="",pName="",size="";
+let scannerInObj=null,scannerOutObj=null,reportChart=null;
+const LOW_STOCK_LIMIT=3;
+
+function saveData(){
+  localStorage.setItem("equip_stock",JSON.stringify(stock));
+  localStorage.setItem("equip_logs",JSON.stringify(logs));
+  localStorage.setItem("equip_products",JSON.stringify(products));
+  localStorage.setItem("equip_counter",JSON.stringify(counter));
+}
+function loadData(){
+  try{
+    const s=localStorage.getItem("equip_stock");
+    const l=localStorage.getItem("equip_logs");
+    const p=localStorage.getItem("equip_products");
+    const c=localStorage.getItem("equip_counter");
+    if(s) stock=JSON.parse(s);
+    if(l) logs=JSON.parse(l);
+    if(p) products=JSON.parse(p);
+    if(c) counter=JSON.parse(c);
+  }catch(e){console.error(e);}
+}
+function resetData(){
+  if(confirm("確定要清空全部資料？")){
+    localStorage.removeItem("equip_stock");
+    localStorage.removeItem("equip_logs");
+    localStorage.removeItem("equip_products");
+    localStorage.removeItem("equip_counter");
+    location.reload();
+  }
+}
+function selectCoach(k){
+  current=k;
+  document.getElementById("title").innerText=users[k].name+" 登入";
+  document.getElementById("pw").value="";
+  document.getElementById("modal").style.display="block";
+}
+function loginUser(){
+  const pw=document.getElementById("pw").value;
+  if(!current||!users[current]) return alert("請先選擇教練");
+  if(users[current].password!==pw) return alert("密碼錯誤");
+  currentUserName=users[current].name;
+  isAdmin=(current==="jerry");
+  document.getElementById("loginArea").style.display="none";
+  document.getElementById("main").style.display="block";
+  document.getElementById("welcome").innerText="歡迎 "+currentUserName;
+  closeModal();
+  renderProducts();
+}
+function logout(){
+  current=""; currentUserName=""; isAdmin=false;
+  stopScanIn(); stopScanOut();
+  document.getElementById("main").style.display="none";
+  document.getElementById("loginArea").style.display="block";
+  document.querySelectorAll(".section").forEach(s=>s.style.display="none");
+  closeModal();
+}
+function closeModal(){
+  document.getElementById("modal").style.display="none";
+  document.getElementById("pw").value="";
+}
+function renderProducts(){
+  let html="";
+  for(const code in products){
+    html += '<button class="secondary" onclick="selectProduct(\''+code+'\',\''+products[code]+'\')">'+products[code]+'</button>';
+  }
+  document.getElementById("productButtons").innerHTML=html;
+}
+function hideSections(){
+  document.querySelectorAll(".section").forEach(s=>s.style.display="none");
+}
+function openSection(id){
+  hideSections();
+  if(id==="inPanel"&&!isAdmin) return alert("只有佳祐可以進貨");
+  if(id==="addPanel"&&!isAdmin) return alert("只有佳祐可以新增商品");
+  document.getElementById(id).style.display="block";
+  if(id==="stockPanel"){ renderStock(); renderLogs(); }
+}
+function showStock(){
+  hideSections();
+  document.getElementById("stockPanel").style.display="block";
+  document.getElementById("logPanel").style.display="block";
+  renderStock(); renderLogs();
+}
+function showReport(){
+  hideSections();
+  document.getElementById("reportPanel").style.display="block";
+  drawMonthlyChart();
+}
+function toggleBigMode(){ document.body.classList.toggle("big-mode"); }
+function addProduct(){
+  if(!isAdmin) return alert("只有佳祐可以新增商品");
+  const name=document.getElementById("newName").value.trim();
+  const code=document.getElementById("newCode").value.trim().toUpperCase();
+  if(!name||!code) return alert("請輸入商品名稱與簡碼");
+  if(products[code]) return alert("這個簡碼已存在");
+  products[code]=name;
+  document.getElementById("newName").value="";
+  document.getElementById("newCode").value="";
+  renderProducts();
+  saveData();
+  alert("新增完成");
+}
+function selectProduct(code,name){
+  pCode=code; pName=name;
+  document.getElementById("sizeArea").style.display="flex";
+  document.getElementById("qtyArea").style.display="none";
+}
+function setSize(s){
+  size=s;
+  document.getElementById("qtyArea").style.display="block";
+}
+async function generateIn(){
+  const q=parseInt(document.getElementById("qty").value||"0",10);
+  if(!pCode||!size||!q||q<1) return alert("請先選商品、尺寸、數量");
+  const key=pCode+"-"+size;
+  if(!counter[key]) counter[key]=1;
+  const result=document.getElementById("result");
+  const labels=document.getElementById("labels");
+  result.innerHTML=""; labels.innerHTML="";
+  let firstCode="",lastCode="";
+  for(let i=0;i<q;i++){
+    const num=String(counter[key]).padStart(4,"0");
+    const code=pCode+"-"+size+num;
+    if(i===0) firstCode=code; lastCode=code;
+    stock[code]={name:pName,productName:pName,size:size,productCode:pCode,code:code,status:"in",inTime:new Date().toLocaleString()};
+    const div=document.createElement("div");
+    div.className="label";
+    const safeId="bc"+code.replace(/[^a-zA-Z0-9]/g,"");
+    div.innerHTML='<b>'+pName+'</b><br>'+size+'<br><svg id="'+safeId+'"></svg><br><span class="barcode-text">'+code+'</span>';
+    labels.appendChild(div);
+    JsBarcode("#"+safeId, code, {format:"CODE128",displayValue:false,width:1.5,height:45,margin:2});
+    counter[key]++;
+  }
+  result.innerHTML='✅ 進貨完成<br>物品：'+pName+'<br>尺寸：'+size+'<br>數量：'+q+'<br>條碼範圍：'+firstCode+' ～ '+lastCode;
+  saveData();
+}
+async function manualIn(){
+  const code=document.getElementById("inCode").value.trim().toUpperCase();
+  await processIn(code);
+}
+async function processIn(code){
+  if(!isAdmin) return alert("只有佳祐可以進貨");
+  if(!stock[code]) return alert("此條碼不存在，不能回庫");
+  stock[code].status="in";
+  stock[code].inTime=new Date().toLocaleString();
+  document.getElementById("inCode").value="";
+  saveData();
+  alert("已進貨："+code);
+}
+function scanIn(){
+  if(scannerInObj) stopScanIn();
+  scannerInObj=new Html5Qrcode("readerIn");
+  scannerInObj.start({facingMode:"environment"},{fps:10,qrbox:220},async txt=>{
+    stopScanIn();
+    await processIn(String(txt).trim().toUpperCase());
+  },()=>{}).catch(()=>alert("無法開啟相機"));
+}
+function stopScanIn(){
+  if(scannerInObj){
+    scannerInObj.stop().then(()=>{scannerInObj.clear();scannerInObj=null;}).catch(()=>{scannerInObj=null;});
+  }
+}
+async function stockOut(){
+  const code=document.getElementById("outCode").value.trim().toUpperCase();
+  await processOut(code);
+}
+async function processOut(code){
+  if(!stock[code]) return alert("查無此條碼");
+  if(stock[code].status==="out") return alert("這件已出貨");
+  const item=stock[code];
+  stock[code].status="out";
+  logs.push({user:currentUserName,name:item.name,size:item.size,code:item.code,time:new Date().toLocaleString()});
+  document.getElementById("outCode").value="";
+  saveData();
+  alert("出貨成功");
+}
+function scanOut(){
+  if(scannerOutObj) stopScanOut();
+  scannerOutObj=new Html5Qrcode("readerOut");
+  scannerOutObj.start({facingMode:"environment"},{fps:10,qrbox:220},async txt=>{
+    stopScanOut();
+    await processOut(String(txt).trim().toUpperCase());
+  },()=>{}).catch(()=>alert("無法開啟相機"));
+}
+function stopScanOut(){
+  if(scannerOutObj){
+    scannerOutObj.stop().then(()=>{scannerOutObj.clear();scannerOutObj=null;}).catch(()=>{scannerOutObj=null;});
+  }
+}
+function renderStock(){
+  let summary={};
+  for(const code in stock){
+    const item=stock[code];
+    const key=item.name+"__"+item.size;
+    if(!summary[key]) summary[key]={name:item.name,size:item.size,in:0,out:0};
+    if(item.status==="in") summary[key].in++;
+    else summary[key].out++;
+  }
+  let left="<h3>📤 出貨數量</h3><table><tr><th>物品</th><th>尺寸</th><th>出貨數量</th></tr>";
+  const keys=Object.keys(summary);
+  if(keys.length===0) left+="<tr><td colspan='3'>目前沒有資料</td></tr>";
+  else keys.forEach(k=>{ const s=summary[k]; left+="<tr><td>"+s.name+"</td><td>"+s.size+"</td><td>"+s.out+"</td></tr>"; });
+  left+="</table>";
+  let right="<h3>📦 目前庫存</h3><table><tr><th>物品</th><th>尺寸</th><th>庫存</th><th>警告</th></tr>";
+  if(keys.length===0) right+="<tr><td colspan='4'>目前沒有庫存</td></tr>";
+  else keys.forEach(k=>{ const s=summary[k]; const warn=s.in<=LOW_STOCK_LIMIT?"⚠️低庫存":""; right+="<tr><td>"+s.name+"</td><td>"+s.size+"</td><td>"+s.in+"</td><td>"+warn+"</td></tr>"; });
+  right+="</table>";
+  document.getElementById("stockPanel").innerHTML='<div class="flex"><div class="col">'+left+'</div><div class="col">'+right+'</div></div>';
+}
+function renderLogs(){
+  let html="<h3>📝 出貨紀錄</h3><table><tr><th>教練</th><th>物品</th><th>尺寸</th><th>條碼</th><th>時間</th></tr>";
+  if(logs.length===0) html+="<tr><td colspan='5'>目前沒有出貨紀錄</td></tr>";
+  else logs.forEach(log=>{ html+="<tr><td>"+log.user+"</td><td>"+log.name+"</td><td>"+log.size+"</td><td>"+log.code+"</td><td>"+log.time+"</td></tr>"; });
+  html+="</table>";
+  document.getElementById("logPanel").style.display="block";
+  document.getElementById("logPanel").innerHTML=html;
+}
+function getMonthlyStats(){
+  const monthly={};
+  logs.forEach(log=>{ const d=new Date(log.time); const key=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); if(!monthly[key]) monthly[key]=0; monthly[key]++; });
+  return monthly;
+}
+function getYearlyStats(){
+  const yearly={};
+  logs.forEach(log=>{ const d=new Date(log.time); const key=String(d.getFullYear()); if(!yearly[key]) yearly[key]=0; yearly[key]++; });
+  return yearly;
+}
+function drawMonthlyChart(){
+  const stats=getMonthlyStats();
+  const labels=Object.keys(stats).sort();
+  const values=labels.map(k=>stats[k]);
+  if(reportChart) reportChart.destroy();
+  const ctx=document.getElementById("reportChart").getContext("2d");
+  reportChart=new Chart(ctx,{type:"bar",data:{labels:labels,datasets:[{label:"每月出貨數量",data:values}]},options:{responsive:true}});
+  document.getElementById("reportSummary").innerHTML="<h4>📅 月統計摘要</h4>"+(labels.length?labels.map((k,i)=>k+"："+values[i]+" 件").join("<br>"):"目前沒有資料");
+}
+function drawYearlyChart(){
+  const stats=getYearlyStats();
+  const labels=Object.keys(stats).sort();
+  const values=labels.map(k=>stats[k]);
+  if(reportChart) reportChart.destroy();
+  const ctx=document.getElementById("reportChart").getContext("2d");
+  reportChart=new Chart(ctx,{type:"line",data:{labels:labels,datasets:[{label:"每年出貨數量",data:values,fill:false,tension:0.2}]},options:{responsive:true}});
+  document.getElementById("reportSummary").innerHTML="<h4>🗓️ 年統計摘要</h4>"+(labels.length?labels.map((k,i)=>k+"："+values[i]+" 件").join("<br>"):"目前沒有資料");
+}
+function exportExcel(){
+  const data=[["條碼","名稱","尺寸","狀態"]];
+  for(const k in stock){ const i=stock[k]; data.push([k,i.name,i.size,i.status]); }
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"庫存");
+  XLSX.writeFile(wb,"庫存.xlsx");
+}
+function exportStatsExcel(){
+  const monthly=getMonthlyStats();
+  const yearly=getYearlyStats();
+  const monthlyData=[["月份","出貨數量"]];
+  Object.keys(monthly).sort().forEach(k=>monthlyData.push([k,monthly[k]]));
+  const yearlyData=[["年份","出貨數量"]];
+  Object.keys(yearly).sort().forEach(k=>yearlyData.push([k,yearly[k]]));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(monthlyData),"月統計");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(yearlyData),"年統計");
+  XLSX.writeFile(wb,"月年統計報表.xlsx");
+}
+loadData();
+</script>
+</body>
+</html>
